@@ -1,0 +1,24 @@
+{
+  "name": "public-smart-contracts",
+  "version": "1.0.0",
+  "description": "Public smart contracts of Cripto Country",
+  "main": ".",
+  "scripts": {
+    "test": "npx hardhat test"
+  },
+  "keywords": [],
+  "author": "Cristian Rios <mcristianrios@gmail.com>",
+  "contributors": [{
+    "name": "Ariel Sandez",
+    "email": "asandez@gmail.com"
+  }],
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-waffle": "2.0.1",
+    "@openzeppelin/contracts": "4.5.0",
+    "@openzeppelin/contracts-upgradeable": "4.5.1",
+    "@openzeppelin/hardhat-upgrades": "1.14.0",
+    "chai": "4.3.4",
+    "hardhat": "2.6.7"
+  }
+}
