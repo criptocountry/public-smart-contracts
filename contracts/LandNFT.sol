@@ -2,12 +2,11 @@
 pragma solidity ^0.8.9;
 pragma experimental ABIEncoderV2;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./openzeppelin/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol"; // TODO: remove this - not used
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "./utils/TransferFeeERC721.sol";
 import "./ILandNFT.sol";
@@ -26,12 +25,12 @@ contract LandNFT is ILandNFT, Initializable, TransferFeeERC721, OwnableUpgradeab
   function initialize(address payable transferFeeAddress) public initializer {
     // initializes TransferFeeERC721
     __TransferFeeERC721_init(ADMIN_ROLE, transferFeeAddress, "Unit trade land", "UTL");
-    
+
     // setup this contract roles
     _setupRole(ADMIN_ROLE, msg.sender);
     _setupRole(MINTER_ROLE, msg.sender);
     _setupRole(PAUSER_ROLE, msg.sender);
-    
+
     // set new 'admin' role in order to manage other roles
     _setRoleAdmin(PAUSER_ROLE, ADMIN_ROLE);
     _setRoleAdmin(MINTER_ROLE, ADMIN_ROLE);
@@ -104,7 +103,7 @@ contract LandNFT is ILandNFT, Initializable, TransferFeeERC721, OwnableUpgradeab
     */
   function redeemMany(uint256 amount, address owner, uint city) public whenNotPaused onlyRole(MINTER_ROLE) returns (uint256[] memory) {
     uint256[] memory _tokenIds = new uint256[](amount);
-    
+
     for (uint256 i = 0; i < amount; i++) {
       _tokenIds[i] = mint(owner, city);
     }
@@ -137,5 +136,16 @@ contract LandNFT is ILandNFT, Initializable, TransferFeeERC721, OwnableUpgradeab
   function setTransferFee(uint256 fee) public override onlyRole(MINTER_ROLE) {
     require(hasRole(MINTER_ROLE, msg.sender), "Signature invalid or unauthorized");
     _setTransferFee(fee);
+  }
+
+  /**
+    * @dev Enable ADMIN_ROLE to be admin of itself.
+    *
+    * Requirements:
+    *
+    * - The caller must an admin.
+    */
+  function fixAdminRole() public onlyRole(ADMIN_ROLE) {
+    _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
   }
 }

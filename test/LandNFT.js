@@ -8,8 +8,8 @@ const bitcoinResidence = 1;
 
 async function deploy() {
   const [deployeer, minter, redeemer, tokenReceiver, banker, ...otherWallets] = await ethers.getSigners();
-  
-  let factory = await ethers.getContractFactory('LandNFT');
+
+  const factory = await ethers.getContractFactory('LandNFT');
   const contract = await upgrades.deployProxy(factory, [banker.address]);
   await contract.deployed();
 
@@ -30,7 +30,7 @@ async function deploy() {
   };
 }
 
-describe('LandNFT', function() {  
+describe('LandNFT', function() {
   it('Should deploy', async function() {
     const [banker] = await ethers.getSigners();
 
@@ -42,7 +42,7 @@ describe('LandNFT', function() {
   it('Should not be able to initialize twice', async function() {
     const [banker] = await ethers.getSigners();
 
-    let factory = await ethers.getContractFactory('LandNFT')
+    const factory = await ethers.getContractFactory('LandNFT')
     const contract = await upgrades.deployProxy(factory, [banker.address]);
     await contract.deployed();
 
@@ -86,7 +86,7 @@ describe('LandNFT', function() {
     expect(await contract.connect(redeemer).ownerOf(tokenId)).to.equal(redeemer.address);
     await expect(contract.connect(redeemer).ownerOf(2))
       .to.be.revertedWith('ERC721: owner query for nonexistent token');
-    
+
     // it is expected that redeemer has no free transfer role
     expect(await contract.hasRole(roles.freeTransfer, redeemer.address)).to.be.equal(false);
     // and because of that should not be able to transfer freely
@@ -185,5 +185,23 @@ describe('LandNFT', function() {
 
     await expect(contract.connect(otherWallets[0]).redeem(otherWallets[0].address, bitcoinResidence, { value: 0 }))
       .to.be.revertedWith(`AccessControl: account ${otherWallets[0].address.toLowerCase()} is missing role ${roles.minter}`);
+  });
+
+  it('Should be able to add another admin after the fix executed', async function() {
+    const { contract, deployeer, otherWallets } = await deploy();
+
+    // admin should not be able to add another admin
+    await expect(contract.grantRole(roles.admin, otherWallets[0].address))
+      .to.be.revertedWith(`AccessControl: account ${deployeer.address.toLowerCase()} is missing role ${roles.defaultAdminRole}`);
+
+    // admin manages admins now
+    await expect(await contract.fixAdminRole())
+      .to.emit(contract, 'RoleAdminChanged')
+      .withArgs(roles.admin, roles.defaultAdminRole, roles.admin);
+
+    // admin is able to add another admin
+    await expect(await contract.grantRole(roles.admin, otherWallets[0].address))
+      .to.emit(contract, 'RoleGranted')
+      .withArgs(roles.admin, otherWallets[0].address, deployeer.address);
   });
 });
